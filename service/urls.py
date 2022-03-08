@@ -11,5 +11,7 @@ router.register(r'users', views.UserViewSet)
 # 另外，我们还要包含可浏览的API的登录URL。
 urlpatterns = [
     re_path(r'^', include(router.urls)),
+    re_path(r'^register/', views.RegisterView.as_view()),
+    re_path(r'^login/', views.LogView.as_view()),
     re_path(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

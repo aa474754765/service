@@ -1,11 +1,15 @@
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
+from django.forms import ValidationError
 from rest_framework import serializers
 
 from service.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES
 
+
 class UserSerializer(serializers.ModelSerializer):
 
-    snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
+    snippets = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Snippet.objects.all())
     # owner = serializers.ReadOnlyField(source='owner.username')
 
     class Meta:
@@ -13,10 +17,35 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'snippets')
 
 
-class GroupSerializer(serializers.HyperlinkedModelSerializer):
+class RegisterSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(max_length=16, min_length=6, write_only=True)
+
     class Meta:
-        model = Group
-        fields = ('url', 'name')
+        model = User
+        fields = ('username', 'password', 'password2')
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise ValidationError('两次密码输入不一致')
+        del attrs['password2']
+        attrs['password'] = make_password(attrs['password'])
+        return super().validate(attrs)
+
+
+class LogSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=6)
+
+    class Meta:
+        model = User
+        fields = ('username', 'password')
+
+    def validate(self, attrs):
+        user_obj = User.objects.filter(username=attrs['username']).first()
+        print(user_obj)
+        if user_obj:
+            if check_password(attrs['password'], user_obj.password):
+                return super().validate('success')
+        raise ValidationError('用户名或密码错误')
 
 
 class SnippetSerializer(serializers.ModelSerializer):
