@@ -3,10 +3,14 @@ from rest_framework import serializers
 
 from service.models import Snippet, LANGUAGE_CHOICES, STYLE_CHOICES
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+
+    snippets = serializers.PrimaryKeyRelatedField(many=True, queryset=Snippet.objects.all())
+    # owner = serializers.ReadOnlyField(source='owner.username')
+
     class Meta:
         model = User
-        fields = ('url', 'username', 'email', 'groups')
+        fields = ('id', 'username', 'snippets')
 
 
 class GroupSerializer(serializers.HyperlinkedModelSerializer):

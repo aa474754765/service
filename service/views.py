@@ -11,25 +11,20 @@ from rest_framework.views import APIView
 from django.http import Http404
 from rest_framework import mixins
 from rest_framework import generics
+from rest_framework import permissions
 
 from service.serializers import GroupSerializer, SnippetSerializer, UserSerializer
 from service.models import Snippet
 
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    允许用户查看或编辑的 API 端点。
-    """
-    queryset = User.objects.all().order_by('-date_joined')
+
+class UserList(generics.ListAPIView):
+    queryset = User.objects.all()
     serializer_class = UserSerializer
 
 
-class GroupViewSet(viewsets.ModelViewSet):
-    """
-    允许组查看或编辑的 API 端点。
-    """
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-
+class UserDetail(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
 # class JSONResponse(HttpResponse):
 #     """
@@ -43,6 +38,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 class SnippetList(mixins.ListModelMixin,
                   mixins.CreateModelMixin,
                   generics.GenericAPIView):
+
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
 
@@ -52,11 +49,15 @@ class SnippetList(mixins.ListModelMixin,
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 class SnippetDetail(mixins.RetrieveModelMixin,
                     mixins.UpdateModelMixin,
                     mixins.DestroyModelMixin,
                     generics.GenericAPIView):
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     queryset = Snippet.objects.all()
     serializer_class = SnippetSerializer
 
