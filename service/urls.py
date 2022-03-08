@@ -1,13 +1,15 @@
-from django.urls import re_path
-from rest_framework.urlpatterns import format_suffix_patterns
-
+from django.urls import re_path, include
 from service import views
+from rest_framework.routers import DefaultRouter
 
+# 创建路由器并注册我们的视图。
+router = DefaultRouter()
+router.register(r'snippets', views.SnippetViewSet)
+router.register(r'users', views.UserViewSet)
+
+# API URL现在由路由器自动确定。
+# 另外，我们还要包含可浏览的API的登录URL。
 urlpatterns = [
-    re_path(r'^snippets/$', views.SnippetList.as_view()),
-    re_path(r'^snippets/(?P<pk>[0-9]+)/$', views.SnippetDetail.as_view()),
-    re_path(r'^users/$', views.UserList.as_view()),
-    re_path(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view())
+    re_path(r'^', include(router.urls)),
+    re_path(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)
